@@ -1,7 +1,19 @@
 ----------------------------------------------------------
 **NORMAL DOCKERFILE OR Single stage Dockerfile**
 ----------------------------------------------------------
-
+#single stage Dockerfile
+FROM ubuntu AS build
+RUN apt-get update && apt-get install -y openjdk-17-jdk && apt-get install -y maven git wget
+RUN git clone https://github.com/bvenkydevops/hello-world1.git
+WORKDIR /hello-world1/webapp/
+RUN mvn clean package
+#Install Tomcat
+RUN wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.76/bin/apache-tomcat-9.0.76.tar.gz && \
+    tar -xzf apache-tomcat-9.0.76.tar.gz && \
+    mv apache-tomcat-9.0.76 /usr/local/tomcat
+RUN cp target/*.war /usr/local/tomcat/webapps/
+EXPOSE 8080
+CMD ["/usr/local/tomcat/bin/catalina.sh", "run"]
 
 
 
@@ -16,47 +28,47 @@ root@ip-172-31-86-113:~/hello-world1/webapp# docker images
 
  #docker run --name c1 -d -p 8080:8080 javawebapp:latest
       d79f3a4b258016deb938af7f254d5c4ff1ad3b4535c99d5818b4448938dd982b
-## ACCESS the container in browser using
-# http://3.94.105.153:8080/webapp/
+#ACCESS the container in browser using
+#http://3.94.105.153:8080/webapp/
 
 ![Screenshot (444)](https://github.com/user-attachments/assets/3e7f6e6a-8085-4101-a34e-33ec633f928f)
 
 
 # HERE ,see the above Normal Dockerfile when the build image, the Docker image Size is **962MB**
-# So, I want to reduce my docker image size for that,
+#So, I want to reduce my docker image size for that,
 
 
 --------------------------------------------------------------------------------------------------------------------------------
 # Multistage Docker file ,In this 2 stages are there 1 .Build stage 2.Final stage
 ---------------------------------------------------------------------------------------------------------------------------------
-################## Build stage #################################################
-# Use Ubuntu as the base image for building the app
+################## **Build stage** #################################################
+#Use Ubuntu as the base image for building the app
 FROM ubuntu:20.04 AS build
 ENV DEBIAN_FRONTEND=noninteractive
-# Install Java 17 and Maven
+#Install Java 17 and Maven
 RUN apt-get update && \
     apt-get install -y openjdk-17-jdk maven git
 
-# Clone the repository
+#Clone the repository
 RUN git clone https://github.com/bvenkydevops/hello-world1.git
 
-# Set the working directory to the webapp folder
+#Set the working directory to the webapp folder
 WORKDIR /hello-world1/webapp
 
-# Build the project using Maven
+#Build the project using Maven
 RUN mvn clean package
-###################### Final stage #############################
-# Use a new image for deployment with Tomcat
+###################### **Final stage** #############################
+#Use a new image for deployment with Tomcat
 FROM tomcat:9.0.76-jdk17
 
-# Copy the WAR file from the build stage to Tomcat's webapps directory
+#Copy the WAR file from the build stage to Tomcat's webapps directory
 COPY --from=build /hello-world1/webapp/target/*.war /usr/local/tomcat/webapps/
 
-# Expose port 8080
+#Expose port 8080
 EXPOSE 8080
 
-# Start Tomcat
-CMD ["catalina.sh", "run"]
+#Start Tomcat
+ CMD ["catalina.sh", "run"]
 ------------------------------------------------------------------------------------
 #docker build -t javawebappmultistage .
 root@ip-172-31-86-113:~/hello-worldld1/webapp# docker images
